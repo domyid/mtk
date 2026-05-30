@@ -10,23 +10,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --kuromi-purple: #E9D5FF;
-            --kuromi-dark: #374151;
-            --keroppi-green: #BBF7D0;
-            --keroppi-dark: #4ADE80;
-            --pastel-pink: #F472B6;
+            /* Kuromi & Keroppi (Default) */
+            --grad-1: #E9D5FF;
+            --grad-2: #BBF7D0;
+            --btn-add-bg: #E9D5FF; --btn-add-border: #C084FC; --btn-add-text: #7E22CE;
+            --btn-sub-bg: #FFD6E8; --btn-sub-border: #F472B6; --btn-sub-text: #DB2777;
+            --btn-mul-bg: #BBF7D0; --btn-mul-border: #4ADE80; --btn-mul-text: #166534;
+            --btn-div-bg: #374151; --btn-div-border: #1F2937; --btn-div-text: #ffffff;
             --text-main: #4A4A4A;
             --coin-yellow: #FDE047;
+        }
+
+        body.theme-cinna {
+            /* Cinnamoroll & Pochacco */
+            --grad-1: #D9EAF5;
+            --grad-2: #FFD6E8;
+            --btn-add-bg: #D9EAF5; --btn-add-border: #8AB4F8; --btn-add-text: #3B82F6;
+            --btn-sub-bg: #FFD6E8; --btn-sub-border: #F472B6; --btn-sub-text: #DB2777;
+            --btn-mul-bg: #D7F0D4; --btn-mul-border: #81C995; --btn-mul-text: #059669;
+            --btn-div-bg: #FEF08A; --btn-div-border: #FBBF24; --btn-div-text: #D97706;
         }
         
         body {
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, var(--kuromi-purple), var(--keroppi-green));
+            background: linear-gradient(135deg, var(--grad-1), var(--grad-2));
             color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
             touch-action: manipulation;
+            transition: background 0.5s ease;
         }
+
+        /* Kelas Dinamis untuk Tombol Berdasarkan Tema */
+        .theme-add { background-color: var(--btn-add-bg); border-color: var(--btn-add-border); color: var(--btn-add-text); }
+        .theme-sub { background-color: var(--btn-sub-bg); border-color: var(--btn-sub-border); color: var(--btn-sub-text); }
+        .theme-mul { background-color: var(--btn-mul-bg); border-color: var(--btn-mul-border); color: var(--btn-mul-text); }
+        .theme-div { background-color: var(--btn-div-bg); border-color: var(--btn-div-border); color: var(--btn-div-text); }
 
         h1, h2, h3, .heading-font {
             font-family: 'Fredoka One', cursive;
@@ -168,12 +187,20 @@
 
         <!-- 0. SCREEN: WELCOME SCREEN -->
         <div id="welcome-screen" class="space-y-6 py-4">
-            <div class="flex justify-center space-x-4 mb-4 animate-bounce">
-                <span class="text-6xl">🐸</span>
-                <span class="text-6xl">🖤</span>
+            <h2 class="text-xl text-purple-600 font-bold heading-font mb-1 text-left">1. Pilih Temamu 🎨</h2>
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <button id="theme-btn-cinna" onclick="selectTheme('cinna')" class="btn-cute bg-[#D9EAF5] border-4 border-transparent rounded-xl p-3 flex flex-col items-center transition-all">
+                    <span class="text-4xl">☁️🐶</span>
+                    <span class="font-bold text-xs mt-2 text-[#3B82F6]">Cinna & Pocha</span>
+                </button>
+                <button id="theme-btn-kuromi" onclick="selectTheme('kuromi')" class="btn-cute bg-[#E9D5FF] border-4 border-transparent rounded-xl p-3 flex flex-col items-center transition-all">
+                    <span class="text-4xl">💀🐸</span>
+                    <span class="font-bold text-xs mt-2 text-[#7E22CE]">Kuromi & Keroppi</span>
+                </button>
             </div>
-            <h1 class="text-3xl text-purple-600 mb-2 heading-font">Hai, Siapa namamu?</h1>
-            <input type="text" id="player-name-input" placeholder="Ketik namamu di sini..." class="w-full p-4 rounded-xl border-4 border-purple-300 text-center text-xl heading-font focus:outline-none focus:border-purple-500 bg-white/80">
+
+            <h1 class="text-xl text-purple-600 heading-font mb-2 mt-4 text-left">2. Siapa namamu? 👧</h1>
+            <input type="text" id="player-name-input" placeholder="Ketik namamu..." class="w-full p-4 rounded-xl border-4 border-purple-300 text-center text-xl heading-font focus:outline-none focus:border-purple-500 bg-white/80">
             <button onclick="saveName()" class="btn-cute w-full bg-green-400 border-b-4 border-green-600 text-white rounded-xl p-4 font-bold heading-font text-2xl mt-4">
                 Mulai Main! 🚀
             </button>
@@ -181,7 +208,8 @@
 
         <!-- 1. SCREEN: MENU UTAMA -->
         <div id="menu-screen" class="space-y-6 hide">
-            <div class="flex justify-center space-x-4 mb-2">
+            <!-- SVG Kuromi & Keroppi -->
+            <div id="svg-kuromi" class="flex justify-center space-x-4 mb-2 transition-all">
                 <!-- SVG Kuromi-inspired -->
                 <svg width="75" height="75" viewBox="0 0 100 100" class="drop-shadow-md">
                     <circle cx="50" cy="55" r="28" fill="white" />
@@ -221,29 +249,53 @@
                 </svg>
             </div>
             
+            <!-- SVG Cinnamoroll & Pochacco -->
+            <div id="svg-cinna" class="flex justify-center space-x-4 mb-2 hide transition-all">
+                <!-- SVG Cinnamoroll-inspired icon -->
+                <svg width="75" height="75" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <circle cx="50" cy="55" r="28" fill="white" />
+                    <ellipse cx="15" cy="50" rx="18" ry="10" fill="white" transform="rotate(-20 15 50)" />
+                    <ellipse cx="85" cy="50" rx="18" ry="10" fill="white" transform="rotate(20 85 50)" />
+                    <circle cx="38" cy="50" r="3.5" fill="#60A5FA" />
+                    <circle cx="62" cy="50" r="3.5" fill="#60A5FA" />
+                    <ellipse cx="28" cy="55" rx="5" ry="3" fill="#FFB6C1" />
+                    <ellipse cx="72" cy="55" rx="5" ry="3" fill="#FFB6C1" />
+                    <path d="M 45 58 Q 50 62 55 58" stroke="#4A4A4A" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- SVG Pochacco-inspired icon -->
+                <svg width="75" height="75" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <circle cx="50" cy="55" r="28" fill="white" />
+                    <path d="M 25 40 Q 10 55 15 70 Q 25 75 28 55 Z" fill="#333" />
+                    <path d="M 75 40 Q 90 55 85 70 Q 75 75 72 55 Z" fill="#333" />
+                    <circle cx="40" cy="50" r="3" fill="#333" />
+                    <circle cx="60" cy="50" r="3" fill="#333" />
+                    <ellipse cx="50" cy="58" rx="4" ry="3" fill="#333" />
+                </svg>
+            </div>
+            
             <div class="relative inline-block">
-                <h1 class="text-3xl text-purple-600 mb-1 pr-6">Halo, <span id="display-player-name">Cantik</span>!</h1>
+                <h1 class="text-3xl text-purple-600 mb-1 pr-6" id="greeting-text">Halo, <span id="display-player-name">Cantik</span>!</h1>
                 <button onclick="editName()" class="absolute top-1 -right-4 text-sm bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">✏️</button>
             </div>
             <p class="text-gray-600 font-semibold text-sm -mt-4">Kumpulkan koin dan tukar dengan hadiah!</p>
 
             <!-- Area Pilihan Pelajaran dengan warna tema baru -->
-            <div class="bg-white/50 p-4 rounded-2xl border-2 border-dashed border-purple-300 mt-2">
-                <h3 class="heading-font text-purple-800 mb-3">Pilih Petualanganmu:</h3>
+            <div class="bg-white/50 p-4 rounded-2xl border-2 border-dashed border-gray-300 mt-2">
+                <h3 class="heading-font text-gray-700 mb-3">Pilih Petualanganmu:</h3>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="startQuiz('add')" class="btn-cute bg-[#E9D5FF] border-2 border-[#C084FC] text-[#7E22CE] rounded-xl p-3 flex flex-col items-center">
+                    <button onclick="startQuiz('add')" class="btn-cute theme-add border-2 rounded-xl p-3 flex flex-col items-center">
                         <span class="text-2xl mb-1">➕</span>
                         <span class="font-bold heading-font text-sm">Tambah</span>
                     </button>
-                    <button onclick="startQuiz('sub')" class="btn-cute bg-[#FFD6E8] border-2 border-[#F472B6] text-[#DB2777] rounded-xl p-3 flex flex-col items-center">
+                    <button onclick="startQuiz('sub')" class="btn-cute theme-sub border-2 rounded-xl p-3 flex flex-col items-center">
                         <span class="text-2xl mb-1">➖</span>
                         <span class="font-bold heading-font text-sm">Kurang</span>
                     </button>
-                    <button onclick="startQuiz('mul')" class="btn-cute bg-[#BBF7D0] border-2 border-[#4ADE80] text-[#166534] rounded-xl p-3 flex flex-col items-center">
+                    <button onclick="startQuiz('mul')" class="btn-cute theme-mul border-2 rounded-xl p-3 flex flex-col items-center">
                         <span class="text-2xl mb-1">✖️</span>
                         <span class="font-bold heading-font text-sm">Kali</span>
                     </button>
-                    <button onclick="startQuiz('div')" class="btn-cute bg-[#374151] border-2 border-[#1F2937] text-white rounded-xl p-3 flex flex-col items-center">
+                    <button onclick="startQuiz('div')" class="btn-cute theme-div border-2 rounded-xl p-3 flex flex-col items-center">
                         <span class="text-2xl mb-1">➗</span>
                         <span class="font-bold heading-font text-sm">Bagi</span>
                     </button>
@@ -429,13 +481,15 @@
         // Elemen DOM Koin
         const totalCoinsDisplay = document.getElementById('total-coins-display');
         
-        const emojis = ['🐸', '🖤', '🎀', '💀', '✨', '🐾', '🍀', '💜'];
+        let emojis = []; // Akan diisi sesuai tema
 
         // --- State Pemain ---
         let playerName = localStorage.getItem('mathKidsName') || '';
+        let activeTheme = localStorage.getItem('mathKidsTheme') || 'kuromi';
 
         // Inisialisasi awal
         updateGlobalCoins();
+        applyTheme();
         initApp();
 
         function initApp() {
@@ -444,6 +498,46 @@
             } else {
                 updateGreeting();
                 showMenu();
+            }
+        }
+
+        // --- Logika Tema ---
+        function selectTheme(theme) {
+            activeTheme = theme;
+            localStorage.setItem('mathKidsTheme', activeTheme);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            // Atur style border tombol di Welcome Screen
+            const btnCinna = document.getElementById('theme-btn-cinna');
+            const btnKuromi = document.getElementById('theme-btn-kuromi');
+            if (btnCinna && btnKuromi) {
+                btnCinna.classList.remove('border-blue-500');
+                btnKuromi.classList.remove('border-purple-500');
+                if (activeTheme === 'cinna') {
+                    btnCinna.classList.add('border-blue-500');
+                } else {
+                    btnKuromi.classList.add('border-purple-500');
+                }
+            }
+
+            // Ganti Body Class untuk CSS Variables & Emojis
+            const greetingText = document.getElementById('greeting-text');
+            if (activeTheme === 'cinna') {
+                document.body.classList.add('theme-cinna');
+                document.body.classList.remove('theme-kuromi');
+                document.getElementById('svg-kuromi')?.classList.add('hide');
+                document.getElementById('svg-cinna')?.classList.remove('hide');
+                emojis = ['🐶', '☁️', '🌸', '🎀', '✨', '🐾', '💙', '⚽'];
+                if(greetingText) greetingText.className = "text-3xl text-blue-500 mb-1 pr-6";
+            } else {
+                document.body.classList.add('theme-kuromi');
+                document.body.classList.remove('theme-cinna');
+                document.getElementById('svg-cinna')?.classList.add('hide');
+                document.getElementById('svg-kuromi')?.classList.remove('hide');
+                emojis = ['🐸', '🖤', '🎀', '💀', '✨', '🐾', '🍀', '💜'];
+                if(greetingText) greetingText.className = "text-3xl text-purple-600 mb-1 pr-6";
             }
         }
 
@@ -640,15 +734,18 @@
             const options = generateOptions(currentAnswer);
             optionsContainer.innerHTML = ''; 
 
-            let btnColorClass, btnBorderClass;
-            if(currentModule === 'add') { btnColorClass = 'bg-blue-100 text-blue-800'; btnBorderClass = 'border-blue-300 hover:bg-blue-200'; }
-            else if(currentModule === 'sub') { btnColorClass = 'bg-pink-100 text-pink-800'; btnBorderClass = 'border-pink-300 hover:bg-pink-200'; }
-            else if(currentModule === 'mul') { btnColorClass = 'bg-green-100 text-green-800'; btnBorderClass = 'border-green-300 hover:bg-green-200'; }
-            else { btnColorClass = 'bg-yellow-100 text-yellow-800'; btnBorderClass = 'border-yellow-300 hover:bg-yellow-200'; }
+            // Warna tombol beradaptasi otomatis dengan CSS Variable (.theme-add, .theme-sub, dll)
+            let themeClassMap = {
+                'add': 'theme-add',
+                'sub': 'theme-sub',
+                'mul': 'theme-mul',
+                'div': 'theme-div'
+            };
+            let btnThemeClass = themeClassMap[currentModule];
 
             options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = `btn-cute ${btnColorClass} border-2 ${btnBorderClass} text-3xl heading-font py-5 rounded-2xl w-full flex justify-center items-center shadow-sm`;
+                btn.className = `btn-cute ${btnThemeClass} border-2 text-3xl heading-font py-5 rounded-2xl w-full flex justify-center items-center shadow-sm`;
                 btn.textContent = opt;
                 btn.onclick = () => handleAnswer(opt, btn);
                 optionsContainer.appendChild(btn);
