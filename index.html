@@ -3,28 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Belajar Matematika Seru!</title>
+    <title>Petualangan Matematika Seru!</title>
     <!-- Menggunakan Tailwind CSS untuk styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Menggunakan font lucu dari Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --cinna-blue: #D9EAF5;
-            --cinna-dark-blue: #8AB4F8;
-            --pocha-green: #D7F0D4;
-            --pocha-dark-green: #81C995;
-            --pastel-pink: #FFD6E8;
+            --kuromi-purple: #E9D5FF;
+            --kuromi-dark: #374151;
+            --keroppi-green: #BBF7D0;
+            --keroppi-dark: #4ADE80;
+            --pastel-pink: #F472B6;
             --text-main: #4A4A4A;
+            --coin-yellow: #FDE047;
         }
         
         body {
             font-family: 'Quicksand', sans-serif;
-            background: linear-gradient(135deg, var(--cinna-blue), var(--pastel-pink));
+            background: linear-gradient(135deg, var(--kuromi-purple), var(--keroppi-green));
             color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
-            touch-action: manipulation; /* Mencegah zoom saat double tap cepat di HP */
+            touch-action: manipulation;
         }
 
         h1, h2, h3, .heading-font {
@@ -61,7 +62,7 @@
             100% { transform: translateX(120vw); }
         }
 
-        /* Animasi Tombol Menggemaskan */
+        /* Animasi Tombol & Kartu */
         .btn-cute {
             transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             box-shadow: 0 6px 0 rgba(0,0,0,0.1);
@@ -69,6 +70,13 @@
         .btn-cute:active {
             transform: translateY(4px);
             box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        }
+        
+        .card-pop {
+            transition: transform 0.3s ease;
+        }
+        .card-pop:hover {
+            transform: scale(1.02);
         }
 
         /* Animasi Jawaban Benar/Salah */
@@ -101,118 +109,285 @@
         }
 
         .hide { display: none !important; }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #81C995, #34D399);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Coin Badge Animation */
+        @keyframes coinBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .coin-icon {
+            display: inline-block;
+            animation: coinBounce 2s infinite;
+        }
     </style>
 </head>
-<body class="relative flex justify-center items-center p-4">
+<body class="relative flex flex-col justify-center items-center p-4">
 
     <!-- Hiasan Background -->
     <div class="cloud" style="width: 120px; height: 40px; top: 10%; left: -20px; animation-duration: 25s;"></div>
     <div class="cloud" style="width: 150px; height: 50px; top: 40%; left: -50px; animation-duration: 35s;"></div>
     <div class="cloud" style="width: 100px; height: 35px; top: 70%; left: -10px; animation-duration: 20s;"></div>
 
+    <!-- DOMPET KOIN GLOBAL (Selalu Terlihat di Atas) -->
+    <div id="global-wallet" class="fixed top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full border-2 border-yellow-400 shadow-md flex items-center gap-2 z-50">
+        <span class="text-2xl coin-icon">🪙</span>
+        <span id="total-coins-display" class="heading-font text-xl text-yellow-600">0</span>
+    </div>
+
     <!-- MAIN CONTAINER -->
-    <div class="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl p-6 card-shadow relative overflow-hidden text-center z-10 border-4 border-white">
+    <div class="w-full max-w-md bg-white/95 backdrop-blur-sm rounded-3xl p-6 card-shadow relative overflow-hidden text-center z-10 border-4 border-white mt-8">
         
-        <!-- HEADER KECIL (Skor & Kembali) -->
-        <div id="game-header" class="flex justify-between items-center mb-6 hide">
-            <button onclick="showMenu()" class="text-pink-500 font-bold text-lg bg-pink-100 rounded-full w-10 h-10 flex items-center justify-center btn-cute">
+        <!-- HEADER KECIL (Navigasi Kuis) -->
+        <div id="game-header" class="flex justify-between items-center mb-4 hide">
+            <button onclick="showMenu()" class="text-purple-500 font-bold text-lg bg-purple-100 rounded-full w-10 h-10 flex items-center justify-center btn-cute">
                 &larr;
             </button>
-            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-sm">
-                ⭐ Skor: <span id="score-display">0</span>/5
+            <div class="flex flex-col items-end">
+                <div class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full font-bold shadow-sm text-sm">
+                    Level <span id="current-level-display">1</span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1 font-bold">Soal <span id="question-count-display">1</span>/5</div>
             </div>
         </div>
 
+        <!-- 0. SCREEN: WELCOME SCREEN -->
+        <div id="welcome-screen" class="space-y-6 py-4">
+            <div class="flex justify-center space-x-4 mb-4 animate-bounce">
+                <span class="text-6xl">🐸</span>
+                <span class="text-6xl">🖤</span>
+            </div>
+            <h1 class="text-3xl text-purple-600 mb-2 heading-font">Hai, Siapa namamu?</h1>
+            <input type="text" id="player-name-input" placeholder="Ketik namamu di sini..." class="w-full p-4 rounded-xl border-4 border-purple-300 text-center text-xl heading-font focus:outline-none focus:border-purple-500 bg-white/80">
+            <button onclick="saveName()" class="btn-cute w-full bg-green-400 border-b-4 border-green-600 text-white rounded-xl p-4 font-bold heading-font text-2xl mt-4">
+                Mulai Main! 🚀
+            </button>
+        </div>
+
         <!-- 1. SCREEN: MENU UTAMA -->
-        <div id="menu-screen" class="space-y-6">
+        <div id="menu-screen" class="space-y-6 hide">
             <div class="flex justify-center space-x-4 mb-2">
-                <!-- SVG Cinnamoroll-inspired icon -->
-                <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-md">
-                    <circle cx="50" cy="50" r="30" fill="white" />
-                    <!-- Telinga panjang -->
-                    <ellipse cx="20" cy="45" rx="15" ry="8" fill="white" transform="rotate(-20 20 45)" />
-                    <ellipse cx="80" cy="45" rx="15" ry="8" fill="white" transform="rotate(20 80 45)" />
-                    <!-- Mata biru -->
-                    <circle cx="40" cy="45" r="3" fill="#60A5FA" />
-                    <circle cx="60" cy="45" r="3" fill="#60A5FA" />
-                    <!-- Pipi pink -->
-                    <ellipse cx="32" cy="50" rx="4" ry="2" fill="#FFB6C1" />
-                    <ellipse cx="68" cy="50" rx="4" ry="2" fill="#FFB6C1" />
-                    <!-- Mulut W -->
-                    <path d="M 45 52 Q 47.5 55 50 52 Q 52.5 55 55 52" stroke="#4A4A4A" stroke-width="2" fill="none" stroke-linecap="round"/>
-                </svg>
-                <!-- SVG Pochacco-inspired icon -->
-                <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-md">
-                    <circle cx="50" cy="50" r="30" fill="white" />
-                    <!-- Telinga hitam flop -->
-                    <path d="M 25 35 Q 10 50 15 65 Q 25 70 28 50 Z" fill="#333" />
-                    <path d="M 75 35 Q 90 50 85 65 Q 75 70 72 50 Z" fill="#333" />
+                <!-- SVG Kuromi-inspired -->
+                <svg width="75" height="75" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <circle cx="50" cy="55" r="28" fill="white" />
+                    <!-- Telinga Tudung Kuromi -->
+                    <path d="M 22 55 Q 10 20 20 10 Q 30 20 35 40 Z" fill="#374151" />
+                    <path d="M 78 55 Q 90 20 80 10 Q 70 20 65 40 Z" fill="#374151" />
+                    <path d="M 22 55 Q 50 25 78 55 Z" fill="#374151" />
+                    <!-- Bandul Pink -->
+                    <circle cx="20" cy="10" r="5" fill="#F472B6" />
+                    <circle cx="80" cy="10" r="5" fill="#F472B6" />
+                    <!-- Tengkorak Pink di dahi -->
+                    <circle cx="50" cy="35" r="6" fill="#F472B6" />
+                    <ellipse cx="48" cy="34" rx="1.5" ry="2" fill="white" />
+                    <ellipse cx="52" cy="34" rx="1.5" ry="2" fill="white" />
                     <!-- Mata -->
-                    <circle cx="40" cy="45" r="3" fill="#333" />
-                    <circle cx="60" cy="45" r="3" fill="#333" />
-                    <!-- Hidung oval hitam -->
-                    <ellipse cx="50" cy="52" rx="4" ry="3" fill="#333" />
+                    <ellipse cx="38" cy="55" rx="3.5" ry="5.5" fill="#374151" />
+                    <ellipse cx="62" cy="55" rx="3.5" ry="5.5" fill="#374151" />
+                    <!-- Hidung & Senyum -->
+                    <circle cx="50" cy="59" r="1.5" fill="#374151" />
+                    <path d="M 45 64 Q 50 67 55 64" stroke="#374151" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- SVG Keroppi-inspired -->
+                <svg width="75" height="75" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <!-- Wajah -->
+                    <ellipse cx="50" cy="55" rx="35" ry="28" fill="#4ADE80" />
+                    <!-- Mata Besar -->
+                    <circle cx="35" cy="32" r="16" fill="white" />
+                    <circle cx="65" cy="32" r="16" fill="white" />
+                    <!-- Pupil Mata -->
+                    <circle cx="35" cy="32" r="4" fill="#374151" />
+                    <circle cx="65" cy="32" r="4" fill="#374151" />
+                    <!-- Pipi Pink -->
+                    <ellipse cx="25" cy="55" rx="5" ry="3" fill="#FCA5A5" />
+                    <ellipse cx="75" cy="55" rx="5" ry="3" fill="#FCA5A5" />
+                    <!-- Mulut V -->
+                    <path d="M 43 52 L 50 62 L 57 52" stroke="#374151" stroke-width="2" fill="none" stroke-linejoin="round" />
                 </svg>
             </div>
             
-            <div>
-                <h1 class="text-3xl text-pink-500 mb-1">Halo Anak Cantik!</h1>
-                <p class="text-gray-600 font-semibold">Mau main sambil belajar apa hari ini?</p>
+            <div class="relative inline-block">
+                <h1 class="text-3xl text-purple-600 mb-1 pr-6">Halo, <span id="display-player-name">Cantik</span>!</h1>
+                <button onclick="editName()" class="absolute top-1 -right-4 text-sm bg-gray-200 hover:bg-gray-300 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">✏️</button>
+            </div>
+            <p class="text-gray-600 font-semibold text-sm -mt-4">Kumpulkan koin dan tukar dengan hadiah!</p>
+
+            <!-- Area Pilihan Pelajaran dengan warna tema baru -->
+            <div class="bg-white/50 p-4 rounded-2xl border-2 border-dashed border-purple-300 mt-2">
+                <h3 class="heading-font text-purple-800 mb-3">Pilih Petualanganmu:</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="startQuiz('add')" class="btn-cute bg-[#E9D5FF] border-2 border-[#C084FC] text-[#7E22CE] rounded-xl p-3 flex flex-col items-center">
+                        <span class="text-2xl mb-1">➕</span>
+                        <span class="font-bold heading-font text-sm">Tambah</span>
+                    </button>
+                    <button onclick="startQuiz('sub')" class="btn-cute bg-[#FFD6E8] border-2 border-[#F472B6] text-[#DB2777] rounded-xl p-3 flex flex-col items-center">
+                        <span class="text-2xl mb-1">➖</span>
+                        <span class="font-bold heading-font text-sm">Kurang</span>
+                    </button>
+                    <button onclick="startQuiz('mul')" class="btn-cute bg-[#BBF7D0] border-2 border-[#4ADE80] text-[#166534] rounded-xl p-3 flex flex-col items-center">
+                        <span class="text-2xl mb-1">✖️</span>
+                        <span class="font-bold heading-font text-sm">Kali</span>
+                    </button>
+                    <button onclick="startQuiz('div')" class="btn-cute bg-[#374151] border-2 border-[#1F2937] text-white rounded-xl p-3 flex flex-col items-center">
+                        <span class="text-2xl mb-1">➗</span>
+                        <span class="font-bold heading-font text-sm">Bagi</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mt-6">
-                <button onclick="startQuiz('add')" class="btn-cute bg-[#D9EAF5] border-2 border-[#8AB4F8] text-[#3B82F6] rounded-2xl p-4 flex flex-col items-center">
-                    <span class="text-3xl mb-1">➕</span>
-                    <span class="font-bold heading-font">Tambah</span>
-                </button>
-                <button onclick="startQuiz('sub')" class="btn-cute bg-[#FFD6E8] border-2 border-[#F472B6] text-[#DB2777] rounded-2xl p-4 flex flex-col items-center">
-                    <span class="text-3xl mb-1">➖</span>
-                    <span class="font-bold heading-font">Kurang</span>
-                </button>
-                <button onclick="startQuiz('mul')" class="btn-cute bg-[#D7F0D4] border-2 border-[#81C995] text-[#059669] rounded-2xl p-4 flex flex-col items-center">
-                    <span class="text-3xl mb-1">✖️</span>
-                    <span class="font-bold heading-font">Kali</span>
-                </button>
-                <button onclick="startQuiz('div')" class="btn-cute bg-[#FEF08A] border-2 border-[#FBBF24] text-[#D97706] rounded-2xl p-4 flex flex-col items-center">
-                    <span class="text-3xl mb-1">➗</span>
-                    <span class="font-bold heading-font">Bagi</span>
-                </button>
-            </div>
+            <!-- Tombol Toko Hadiah -->
+            <button onclick="showShop()" class="btn-cute w-full bg-gradient-to-r from-yellow-300 to-yellow-400 border-2 border-yellow-500 text-yellow-900 rounded-xl p-4 flex justify-center items-center gap-2 mt-4">
+                <span class="text-2xl">🎁</span>
+                <span class="font-bold heading-font text-lg">Buka Toko Hadiah</span>
+            </button>
         </div>
 
         <!-- 2. SCREEN: QUIZ AREA -->
         <div id="quiz-screen" class="hide flex flex-col items-center">
             
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div id="quiz-progress" class="progress-bar"></div>
+            </div>
+
             <!-- Karakter penyemangat acak -->
-            <div id="cheer-character" class="text-4xl mb-4 animate-bounce">🐶☁️</div>
+            <div id="cheer-character" class="text-4xl mb-2 animate-bounce">🐶☁️</div>
             
-            <h2 id="question-text" class="text-4xl text-gray-700 mb-8 mt-2">10 + 15 = ?</h2>
+            <div class="bg-white px-6 py-4 rounded-2xl border-2 border-gray-100 shadow-sm w-full mb-6 mt-2">
+                <h2 id="question-text" class="text-4xl text-gray-700 heading-font">10 + 15 = ?</h2>
+            </div>
 
             <div id="options-container" class="grid grid-cols-2 gap-4 w-full">
                 <!-- Tombol pilihan ganda akan dibuat via JS -->
             </div>
             
             <!-- Pesan Feedback -->
-            <div id="feedback-msg" class="mt-6 text-xl font-bold h-8 heading-font opacity-0 transition-opacity"></div>
+            <div id="feedback-msg" class="mt-4 text-xl font-bold h-8 heading-font opacity-0 transition-opacity flex items-center justify-center gap-2">
+                <!-- Teks feedback -->
+            </div>
         </div>
 
-        <!-- 3. SCREEN: RESULT / HASIL -->
+        <!-- 3. SCREEN: LEVEL UP / HASIL -->
         <div id="result-screen" class="hide flex flex-col items-center space-y-6">
-            <h1 class="text-4xl text-pink-500 mb-2 mt-4">Yeay! Selesai! 🎉</h1>
+            <h1 id="result-title" class="text-3xl text-purple-600 mb-2 mt-2 heading-font">Misi Selesai! 🎉</h1>
             
-            <div class="relative w-32 h-32 flex justify-center items-center bg-blue-50 rounded-full border-4 border-blue-200">
-                <span class="text-5xl" id="result-star">🌟</span>
+            <div class="relative w-32 h-32 flex justify-center items-center bg-yellow-50 rounded-full border-4 border-yellow-200">
+                <div class="text-center">
+                    <div class="text-sm font-bold text-gray-500 mb-1">Koin Didapat</div>
+                    <div class="text-4xl heading-font text-yellow-500 flex items-center justify-center gap-1">
+                        +<span id="earned-coins">0</span><span class="text-2xl">🪙</span>
+                    </div>
+                </div>
             </div>
 
             <div>
-                <p class="text-lg text-gray-600 font-bold">Skor Kamu:</p>
-                <p class="text-5xl heading-font text-blue-500 my-2" id="final-score">5/5</p>
-                <p class="text-xl text-green-500 font-bold heading-font" id="result-message">Kamu Hebat Banget!</p>
+                <p class="text-lg text-gray-600 font-bold">Skor Level <span id="result-level-num">1</span>:</p>
+                <p class="text-4xl heading-font text-purple-500 my-1" id="final-score">5/5</p>
+                <p class="text-lg text-green-500 font-bold heading-font mt-2 px-4" id="result-message">Kamu Hebat Banget!</p>
             </div>
 
-            <button onclick="showMenu()" class="mt-4 btn-cute bg-pink-400 hover:bg-pink-500 text-white w-full py-4 rounded-full text-xl heading-font border-b-4 border-pink-600">
-                Main Lagi Yuk! 🐾
-            </button>
+            <div class="w-full flex gap-3 mt-4">
+                <button onclick="showMenu()" class="flex-1 btn-cute bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-bold border-b-4 border-gray-400">
+                    Menu Utama
+                </button>
+                <button id="next-level-btn" onclick="startNextLevel()" class="flex-1 btn-cute bg-purple-400 hover:bg-purple-500 text-white py-3 rounded-xl font-bold heading-font border-b-4 border-purple-600 hide">
+                    Lanjut Level <span id="next-level-num-display">2</span> 🚀
+                </button>
+                <button id="retry-level-btn" onclick="retryLevel()" class="flex-1 btn-cute bg-green-400 hover:bg-green-500 text-white py-3 rounded-xl font-bold heading-font border-b-4 border-green-600 hide">
+                    Coba Lagi 💪
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. SCREEN: REWARD SHOP -->
+        <div id="shop-screen" class="hide flex flex-col h-full">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showMenu()" class="text-yellow-600 font-bold text-lg bg-yellow-100 rounded-full w-10 h-10 flex items-center justify-center btn-cute">
+                    &larr;
+                </button>
+                <h1 class="text-2xl text-yellow-600 heading-font">Toko Hadiah 🎁</h1>
+                <div class="w-10"></div> <!-- Spacer -->
+            </div>
+
+            <p class="text-gray-500 text-sm mb-4 font-bold">Tukarkan koinmu dengan hadiah spesial dari Mama/Papa!</p>
+
+            <div class="space-y-3 overflow-y-auto max-h-[60vh] pb-4" id="shop-items-container">
+                <!-- Item Toko 1 -->
+                <div class="bg-white border-2 border-pink-200 rounded-xl p-3 flex justify-between items-center card-pop card-shadow">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl bg-pink-100 p-2 rounded-lg">🍫</span>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-700">Snack Kesukaan</h3>
+                            <p class="text-xs text-gray-500">Pilih 1 snack kecil</p>
+                        </div>
+                    </div>
+                    <button onclick="buyItem('snack', 50)" class="btn-cute bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg flex items-center gap-1 border-b-2 border-yellow-600">
+                        50 🪙
+                    </button>
+                </div>
+
+                <!-- Item Toko 2 -->
+                <div class="bg-white border-2 border-blue-200 rounded-xl p-3 flex justify-between items-center card-pop card-shadow">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl bg-blue-100 p-2 rounded-lg">📱</span>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-700">Screen Time</h3>
+                            <p class="text-xs text-gray-500">Main HP 15 Menit</p>
+                        </div>
+                    </div>
+                    <button onclick="buyItem('screen_time_15', 100)" class="btn-cute bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg flex items-center gap-1 border-b-2 border-yellow-600">
+                        100 🪙
+                    </button>
+                </div>
+
+                <!-- Item Toko 3 -->
+                <div class="bg-white border-2 border-green-200 rounded-xl p-3 flex justify-between items-center card-pop card-shadow">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl bg-green-100 p-2 rounded-lg">🎨</span>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-700">Bebas Pilih Mainan</h3>
+                            <p class="text-xs text-gray-500">Main bersama 30 Menit</p>
+                        </div>
+                    </div>
+                    <button onclick="buyItem('play_time', 150)" class="btn-cute bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg flex items-center gap-1 border-b-2 border-yellow-600">
+                        150 🪙
+                    </button>
+                </div>
+
+                 <!-- Item Toko 4 -->
+                 <div class="bg-white border-2 border-purple-200 rounded-xl p-3 flex justify-between items-center card-pop card-shadow">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl bg-purple-100 p-2 rounded-lg">🌟</span>
+                        <div class="text-left">
+                            <h3 class="font-bold text-gray-700">Hadiah Kejutan</h3>
+                            <p class="text-xs text-gray-500">Hadiah rahasia!</p>
+                        </div>
+                    </div>
+                    <button onclick="buyItem('surprise', 300)" class="btn-cute bg-yellow-400 text-yellow-900 font-bold py-2 px-4 rounded-lg flex items-center gap-1 border-b-2 border-yellow-600">
+                        300 🪙
+                    </button>
+                </div>
+            </div>
+
+            <!-- Pesan Pembelian (Hidden by default) -->
+            <div id="purchase-message" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-lg transition-opacity opacity-0 pointer-events-none z-50 whitespace-nowrap">
+                Berhasil ditukar! 🎉
+            </div>
         </div>
 
     </div>
@@ -223,76 +398,196 @@
     <script>
         // --- State Management ---
         let currentModule = '';
+        let currentLevel = 1;
+        const MAX_LEVEL = 3;
         let currentQuestionIndex = 0;
         let score = 0;
         const totalQuestions = 5; // Jumlah soal tiap sesi
         let currentAnswer = 0;
         let isAnswering = false;
+        
+        // Sistem Koin
+        let totalCoins = parseInt(localStorage.getItem('mathKidsCoins')) || 0;
+        let coinsEarnedThisRound = 0;
 
-        // Elemen DOM
+        // Elemen DOM Layar
         const menuScreen = document.getElementById('menu-screen');
         const quizScreen = document.getElementById('quiz-screen');
         const resultScreen = document.getElementById('result-screen');
+        const shopScreen = document.getElementById('shop-screen');
         const gameHeader = document.getElementById('game-header');
         
+        // Elemen DOM Kuis
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
-        const scoreDisplay = document.getElementById('score-display');
         const feedbackMsg = document.getElementById('feedback-msg');
         const cheerCharacter = document.getElementById('cheer-character');
+        const quizProgress = document.getElementById('quiz-progress');
+        const levelDisplay = document.getElementById('current-level-display');
+        const questionCountDisplay = document.getElementById('question-count-display');
+        
+        // Elemen DOM Koin
+        const totalCoinsDisplay = document.getElementById('total-coins-display');
+        
+        const emojis = ['🐸', '🖤', '🎀', '💀', '✨', '🐾', '🍀', '💜'];
 
-        const emojis = ['🐶☁️', '🐶⚽', '🎀', '🌸', '✨', '🐾'];
+        // --- State Pemain ---
+        let playerName = localStorage.getItem('mathKidsName') || '';
+
+        // Inisialisasi awal
+        updateGlobalCoins();
+        initApp();
+
+        function initApp() {
+            if (!playerName) {
+                showWelcome();
+            } else {
+                updateGreeting();
+                showMenu();
+            }
+        }
 
         // --- Navigasi Layar ---
-        function showMenu() {
-            menuScreen.classList.remove('hide');
+        function hideAllScreens() {
+            document.getElementById('welcome-screen').classList.add('hide');
+            menuScreen.classList.add('hide');
             quizScreen.classList.add('hide');
             resultScreen.classList.add('hide');
+            shopScreen.classList.add('hide');
             gameHeader.classList.add('hide');
+        }
+
+        function showWelcome() {
+            hideAllScreens();
+            document.getElementById('welcome-screen').classList.remove('hide');
+            if(playerName) {
+                document.getElementById('player-name-input').value = playerName;
+            }
+        }
+
+        function saveName() {
+            const input = document.getElementById('player-name-input').value.trim();
+            if (input) {
+                playerName = input;
+                localStorage.setItem('mathKidsName', playerName);
+                updateGreeting();
+                showMenu();
+            }
+        }
+
+        function updateGreeting() {
+            document.getElementById('display-player-name').textContent = playerName;
+        }
+
+        function editName() {
+            showWelcome();
+        }
+
+        function showMenu() {
+            hideAllScreens();
+            menuScreen.classList.remove('hide');
             clearConfetti();
+        }
+
+        function showShop() {
+            hideAllScreens();
+            shopScreen.classList.remove('hide');
         }
 
         function startQuiz(moduleType) {
             currentModule = moduleType;
+            currentLevel = 1; // Selalu mulai dari level 1 saat pilih modul baru
+            prepareRound();
+        }
+
+        function startNextLevel() {
+            if (currentLevel < MAX_LEVEL) {
+                currentLevel++;
+                prepareRound();
+            }
+        }
+
+        function retryLevel() {
+            prepareRound();
+        }
+
+        function prepareRound() {
             currentQuestionIndex = 0;
             score = 0;
-            updateScoreDisplay();
+            coinsEarnedThisRound = 0;
             
-            menuScreen.classList.add('hide');
-            resultScreen.classList.add('hide');
+            levelDisplay.textContent = currentLevel;
+            updateProgressBar();
+            
+            hideAllScreens();
             quizScreen.classList.remove('hide');
             gameHeader.classList.remove('hide');
             
             loadQuestion();
         }
 
-        // --- Logika Matematika (Level Kelas 3 SD) ---
+        // --- Logika Matematika Berdasarkan Level ---
         function generateMathProblem() {
             let num1, num2, answer, operatorSymbol;
             
             switch(currentModule) {
-                case 'add': // Penjumlahan: dua angka antara 10 - 50
-                    num1 = Math.floor(Math.random() * 41) + 10;
-                    num2 = Math.floor(Math.random() * 41) + 10;
+                case 'add': 
+                    if (currentLevel === 1) { // Lvl 1: 2 Digit puluhan kecil (10-50)
+                        num1 = Math.floor(Math.random() * 41) + 10;
+                        num2 = Math.floor(Math.random() * 41) + 10;
+                    } else if (currentLevel === 2) { // Lvl 2: 2 Digit puluhan besar s.d 3 digit kecil (50-150)
+                        num1 = Math.floor(Math.random() * 101) + 50;
+                        num2 = Math.floor(Math.random() * 101) + 50;
+                    } else { // Lvl 3: 3 Digit (100 - 999)
+                        num1 = Math.floor(Math.random() * 400) + 100;
+                        num2 = Math.floor(Math.random() * 400) + 100;
+                    }
                     answer = num1 + num2;
                     operatorSymbol = '+';
                     break;
-                case 'sub': // Pengurangan: angka besar dikurangi angka kecil
-                    num1 = Math.floor(Math.random() * 50) + 30; // 30 - 80
-                    num2 = Math.floor(Math.random() * (num1 - 10)) + 5; // Pastikan hasilnya selalu positif dan logis
+                    
+                case 'sub': 
+                    if (currentLevel === 1) { // Lvl 1: 2 Digit (30-90)
+                        num1 = Math.floor(Math.random() * 61) + 30; 
+                        num2 = Math.floor(Math.random() * (num1 - 10)) + 5; 
+                    } else if (currentLevel === 2) { // Lvl 2: 2 Digit besar s.d 3 digit (100-300)
+                        num1 = Math.floor(Math.random() * 201) + 100;
+                        num2 = Math.floor(Math.random() * (num1 - 20)) + 15;
+                    } else { // Lvl 3: 3 Digit s.d 4 Digit (500-1500)
+                        num1 = Math.floor(Math.random() * 1001) + 500;
+                        num2 = Math.floor(Math.random() * (num1 - 100)) + 50;
+                    }
                     answer = num1 - num2;
                     operatorSymbol = '-';
                     break;
-                case 'mul': // Perkalian: 1 s.d 10
-                    num1 = Math.floor(Math.random() * 9) + 2; // 2 - 10
-                    num2 = Math.floor(Math.random() * 9) + 2; // 2 - 10
+                    
+                case 'mul':
+                    if (currentLevel === 1) { // Lvl 1: 1 s.d 5
+                        num1 = Math.floor(Math.random() * 5) + 2; 
+                        num2 = Math.floor(Math.random() * 5) + 2; 
+                    } else if (currentLevel === 2) { // Lvl 2: 1 s.d 10
+                        num1 = Math.floor(Math.random() * 9) + 2;
+                        num2 = Math.floor(Math.random() * 9) + 2;
+                    } else { // Lvl 3: 1 Digit x Puluhan (e.g. 5 x 12)
+                        num1 = Math.floor(Math.random() * 8) + 2; // 2-9
+                        num2 = Math.floor(Math.random() * 11) + 10; // 10-20
+                    }
                     answer = num1 * num2;
                     operatorSymbol = '×';
                     break;
-                case 'div': // Pembagian: Hasil pas 1-10
-                    answer = Math.floor(Math.random() * 9) + 2; // Jawaban 2-10
-                    num2 = Math.floor(Math.random() * 9) + 2; // Pembagi 2-10
-                    num1 = answer * num2; // Angka yang dibagi
+                    
+                case 'div': 
+                    if (currentLevel === 1) { // Lvl 1: Jawaban 2-5
+                        answer = Math.floor(Math.random() * 4) + 2; 
+                        num2 = Math.floor(Math.random() * 4) + 2; 
+                    } else if (currentLevel === 2) { // Lvl 2: Jawaban 2-10
+                        answer = Math.floor(Math.random() * 9) + 2; 
+                        num2 = Math.floor(Math.random() * 9) + 2; 
+                    } else { // Lvl 3: Jawaban puluhan (10-20)
+                        answer = Math.floor(Math.random() * 11) + 10; 
+                        num2 = Math.floor(Math.random() * 8) + 2; // Pembagi 2-9
+                    }
+                    num1 = answer * num2; 
                     operatorSymbol = '÷';
                     break;
             }
@@ -307,27 +602,35 @@
             let options = new Set();
             options.add(correctAnswer);
             
+            // Logika offset pengecoh disesuaikan dengan besar angka
+            let spread = (correctAnswer > 100) ? 20 : (correctAnswer > 50 ? 10 : 5);
+            
             while(options.size < 4) {
-                // Buat pengecoh yang dekat dengan jawaban asli
-                let offset = Math.floor(Math.random() * 11) - 5; // -5 to +5
-                if (offset === 0) offset = 2; // hindari duplikat 0 offset
+                let offset = Math.floor(Math.random() * (spread * 2 + 1)) - spread; 
+                if (offset === 0) offset = 2; // hindari duplikat
                 
+                // Khusus perkalian/pembagian buat pengecoh lebih logis
+                if (currentModule === 'mul' || currentModule === 'div') {
+                    offset = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1); 
+                }
+
                 let wrongAnswer = correctAnswer + offset;
-                if (wrongAnswer > 0) {
+                if (wrongAnswer > 0 && wrongAnswer !== correctAnswer) {
                     options.add(wrongAnswer);
                 }
             }
             
-            // Konversi ke array dan acak
             return Array.from(options).sort(() => Math.random() - 0.5);
         }
 
         // --- Render UI Kuis ---
         function loadQuestion() {
             isAnswering = false;
-            feedbackMsg.style.opacity = '0'; // Sembunyikan feedback
+            feedbackMsg.style.opacity = '0'; 
             
-            // Ganti karakter penyemangat secara acak
+            questionCountDisplay.textContent = currentQuestionIndex + 1;
+            updateProgressBar();
+            
             cheerCharacter.textContent = emojis[Math.floor(Math.random() * emojis.length)];
 
             const problem = generateMathProblem();
@@ -335,92 +638,171 @@
             questionText.textContent = problem.text;
 
             const options = generateOptions(currentAnswer);
-            optionsContainer.innerHTML = ''; // Bersihkan opsi lama
+            optionsContainer.innerHTML = ''; 
 
-            // Warna tombol berdasarkan modul
             let btnColorClass, btnBorderClass;
-            if(currentModule === 'add') { btnColorClass = 'bg-blue-100 text-blue-700'; btnBorderClass = 'border-blue-300'; }
-            else if(currentModule === 'sub') { btnColorClass = 'bg-pink-100 text-pink-700'; btnBorderClass = 'border-pink-300'; }
-            else if(currentModule === 'mul') { btnColorClass = 'bg-green-100 text-green-700'; btnBorderClass = 'border-green-300'; }
-            else { btnColorClass = 'bg-yellow-100 text-yellow-700'; btnBorderClass = 'border-yellow-300'; }
+            if(currentModule === 'add') { btnColorClass = 'bg-blue-100 text-blue-800'; btnBorderClass = 'border-blue-300 hover:bg-blue-200'; }
+            else if(currentModule === 'sub') { btnColorClass = 'bg-pink-100 text-pink-800'; btnBorderClass = 'border-pink-300 hover:bg-pink-200'; }
+            else if(currentModule === 'mul') { btnColorClass = 'bg-green-100 text-green-800'; btnBorderClass = 'border-green-300 hover:bg-green-200'; }
+            else { btnColorClass = 'bg-yellow-100 text-yellow-800'; btnBorderClass = 'border-yellow-300 hover:bg-yellow-200'; }
 
             options.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = `btn-cute ${btnColorClass} border-2 ${btnBorderClass} text-2xl heading-font py-4 rounded-2xl w-full flex justify-center items-center`;
+                btn.className = `btn-cute ${btnColorClass} border-2 ${btnBorderClass} text-3xl heading-font py-5 rounded-2xl w-full flex justify-center items-center shadow-sm`;
                 btn.textContent = opt;
                 btn.onclick = () => handleAnswer(opt, btn);
                 optionsContainer.appendChild(btn);
             });
         }
 
+        function updateProgressBar() {
+            const percentage = (currentQuestionIndex / totalQuestions) * 100;
+            quizProgress.style.width = `${percentage}%`;
+        }
+
         function handleAnswer(selected, btnElement) {
-            if (isAnswering) return; // Cegah double klik
+            if (isAnswering) return; 
             isAnswering = true;
 
             const isCorrect = (selected === currentAnswer);
 
-            // Tampilkan feedback
             feedbackMsg.style.opacity = '1';
             
             if (isCorrect) {
                 btnElement.classList.add('correct-anim');
-                feedbackMsg.textContent = "Wah, Pintar! 🌟";
-                feedbackMsg.className = "mt-6 text-xl h-8 heading-font transition-opacity text-green-500";
+                // Hitung koin berdasarkan level (Lvl 1=2 koin, Lvl 2=4 koin, Lvl 3=6 koin)
+                const coinsEarned = currentLevel * 2;
+                coinsEarnedThisRound += coinsEarned;
+                
+                feedbackMsg.innerHTML = `Wah, Pintar! <span class="text-yellow-500 ml-2 animate-bounce">+${coinsEarned}🪙</span>`;
+                feedbackMsg.className = "mt-4 text-xl h-8 heading-font transition-opacity text-green-600 flex items-center justify-center gap-1";
                 score++;
-                updateScoreDisplay();
-                startConfetti(30); // Sedikit confetti saat benar
+                startConfetti(20); 
             } else {
                 btnElement.classList.add('wrong-anim');
-                feedbackMsg.textContent = "Ups! Coba lagi ya 💪";
-                feedbackMsg.className = "mt-6 text-xl h-8 heading-font transition-opacity text-red-500";
+                feedbackMsg.innerHTML = `Ups! Coba lagi ya 💪`;
+                feedbackMsg.className = "mt-4 text-xl h-8 heading-font transition-opacity text-red-500 flex items-center justify-center";
                 
-                // Tunjukkan yang benar
                 const allButtons = optionsContainer.querySelectorAll('button');
                 allButtons.forEach(b => {
                     if (parseInt(b.textContent) === currentAnswer) {
-                        b.classList.add('border-green-500', 'border-4');
+                        b.classList.add('border-green-500', 'border-4', 'bg-green-50');
                     }
                 });
             }
 
-            // Lanjut ke soal berikutnya setelah delay
             setTimeout(() => {
                 currentQuestionIndex++;
                 if (currentQuestionIndex < totalQuestions) {
                     loadQuestion();
                 } else {
-                    showResult();
+                    updateProgressBar(); // isi penuh bar
+                    setTimeout(showResult, 500); // jeda sebentar sebelum hasil
                 }
-            }, 1500);
-        }
-
-        function updateScoreDisplay() {
-            scoreDisplay.textContent = score;
+            }, 1800);
         }
 
         function showResult() {
-            quizScreen.classList.add('hide');
-            gameHeader.classList.add('hide');
+            hideAllScreens();
             resultScreen.classList.remove('hide');
 
-            document.getElementById('final-score').textContent = `${score} / ${totalQuestions}`;
-            const msgElement = document.getElementById('result-message');
-            const starElement = document.getElementById('result-star');
+            // Tambahkan koin ke total dompet
+            addCoins(coinsEarnedThisRound);
 
-            if (score === totalQuestions) {
-                msgElement.textContent = "Sempurna! Kamu Jenius! 👑";
-                msgElement.className = "text-xl text-pink-500 font-bold heading-font";
-                starElement.textContent = "🏆";
-                startConfetti(150); // Banyak confetti
-            } else if (score >= totalQuestions / 2) {
-                msgElement.textContent = "Bagus Sekali! Pertahankan! 💖";
-                msgElement.className = "text-xl text-blue-500 font-bold heading-font";
-                starElement.textContent = "🌟";
-                startConfetti(50);
+            document.getElementById('result-level-num').textContent = currentLevel;
+            document.getElementById('final-score').textContent = `${score} / ${totalQuestions}`;
+            document.getElementById('earned-coins').textContent = coinsEarnedThisRound;
+            
+            const msgElement = document.getElementById('result-message');
+            const titleElement = document.getElementById('result-title');
+            
+            const nextLevelBtn = document.getElementById('next-level-btn');
+            const retryLevelBtn = document.getElementById('retry-level-btn');
+            
+            nextLevelBtn.classList.add('hide');
+            retryLevelBtn.classList.add('hide');
+
+            // Syarat Lulus: Benar minimal 4 dari 5
+            const passed = score >= 4;
+
+            if (passed) {
+                if (score === totalQuestions) {
+                    msgElement.textContent = "Sempurna! Kamu Jenius! 👑";
+                } else {
+                    msgElement.textContent = "Bagus Sekali! Lulus! 💖";
+                }
+                
+                if (currentLevel < MAX_LEVEL) {
+                    titleElement.textContent = "Level Selesai! 🎉";
+                    document.getElementById('next-level-num-display').textContent = currentLevel + 1;
+                    nextLevelBtn.classList.remove('hide');
+                } else {
+                    titleElement.textContent = "Tamat! Kamu Master! 🏆";
+                    msgElement.textContent += " Semua level diselesaikan!";
+                }
+                startConfetti(150);
             } else {
-                msgElement.textContent = "Terus Semangat Belajar! Semangat! 🐾";
-                msgElement.className = "text-xl text-green-500 font-bold heading-font";
-                starElement.textContent = "💪";
+                titleElement.textContent = "Hampir Saja! 🥺";
+                msgElement.textContent = "Kamu butuh 4 benar untuk lanjut. Semangat! 🐾";
+                msgElement.className = "text-lg text-orange-500 font-bold heading-font mt-2 px-4";
+                retryLevelBtn.classList.remove('hide');
+            }
+        }
+
+        // --- Sistem Ekonomi Koin ---
+        function addCoins(amount) {
+            totalCoins += amount;
+            localStorage.setItem('mathKidsCoins', totalCoins);
+            updateGlobalCoins();
+        }
+
+        function updateGlobalCoins() {
+            totalCoinsDisplay.textContent = totalCoins;
+            // Animasi kecil pada koin di header saat bertambah
+            const icon = document.querySelector('.coin-icon');
+            icon.style.animation = 'none';
+            void icon.offsetWidth; // trigger reflow
+            icon.style.animation = 'pop 0.3s ease';
+            setTimeout(() => { icon.style.animation = 'coinBounce 2s infinite'; }, 300);
+        }
+
+        function buyItem(itemId, cost) {
+            if (totalCoins >= cost) {
+                // Konfirmasi dengan native window.confirm tapi disamarkan sebagai logic saja, 
+                // karena instruksi melarang alert/confirm, kita buat in-app notification.
+                
+                // Kurangi koin
+                totalCoins -= cost;
+                localStorage.setItem('mathKidsCoins', totalCoins);
+                updateGlobalCoins();
+                
+                // Tampilkan pesan sukses
+                const msg = document.getElementById('purchase-message');
+                msg.textContent = "Hore! Silakan tagih ke Mama/Papa! 🎉";
+                msg.classList.remove('opacity-0');
+                msg.classList.add('opacity-100');
+                
+                startConfetti(50);
+                
+                setTimeout(() => {
+                    msg.classList.remove('opacity-100');
+                    msg.classList.add('opacity-0');
+                }, 3000);
+
+            } else {
+                // Koin tidak cukup
+                const msg = document.getElementById('purchase-message');
+                const shortage = cost - totalCoins;
+                msg.textContent = `Yah.. Kurang ${shortage} koin lagi. Main lagi yuk! 💪`;
+                msg.classList.replace('bg-green-500', 'bg-red-500');
+                msg.classList.remove('opacity-0');
+                msg.classList.add('opacity-100');
+                
+                setTimeout(() => {
+                    msg.classList.remove('opacity-100');
+                    msg.classList.add('opacity-0');
+                    setTimeout(()=> msg.classList.replace('bg-red-500', 'bg-green-500'), 500); // reset color
+                }, 3000);
             }
         }
 
@@ -433,7 +815,6 @@
         let particles = [];
         let animationId;
 
-        // Resize canvas if window changes
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -445,10 +826,10 @@
                 particles.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height - canvas.height,
-                    size: Math.random() * 8 + 4,
+                    size: Math.random() * 8 + 6,
                     color: colors[Math.floor(Math.random() * colors.length)],
                     speedY: Math.random() * 3 + 2,
-                    speedX: (Math.random() - 0.5) * 2,
+                    speedX: (Math.random() - 0.5) * 3,
                     rotation: Math.random() * 360,
                     rotationSpeed: (Math.random() - 0.5) * 10
                 });
@@ -476,7 +857,6 @@
                 ctx.translate(p.x, p.y);
                 ctx.rotate(p.rotation * Math.PI / 180);
                 ctx.fillStyle = p.color;
-                // Gambar confetti kotak atau bulat
                 if (i % 2 === 0) {
                     ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
                 } else {
