@@ -698,8 +698,10 @@
             
             // Logika offset pengecoh disesuaikan dengan besar angka
             let spread = (correctAnswer > 100) ? 20 : (correctAnswer > 50 ? 10 : 5);
+            let attempts = 0; // Guard untuk mencegah infinite loop
             
-            while(options.size < 4) {
+            while(options.size < 4 && attempts < 100) {
+                attempts++;
                 let offset = Math.floor(Math.random() * (spread * 2 + 1)) - spread; 
                 if (offset === 0) offset = 2; // hindari duplikat
                 
@@ -712,6 +714,15 @@
                 if (wrongAnswer > 0 && wrongAnswer !== correctAnswer) {
                     options.add(wrongAnswer);
                 }
+            }
+            
+            // Fallback pengaman jika tidak cukup opsi (agar tidak pernah nyangkut)
+            let fallbackOffset = 1;
+            while(options.size < 4) {
+                if (correctAnswer + fallbackOffset > 0) {
+                    options.add(correctAnswer + fallbackOffset);
+                }
+                fallbackOffset++;
             }
             
             return Array.from(options).sort(() => Math.random() - 0.5);
@@ -788,15 +799,21 @@
                 });
             }
 
+            // PERBAIKAN BUG: Kurangi delay jadi 1 detik & tambahkan try-catch agar game tidak freeze
             setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex < totalQuestions) {
-                    loadQuestion();
-                } else {
-                    updateProgressBar(); // isi penuh bar
-                    setTimeout(showResult, 500); // jeda sebentar sebelum hasil
+                try {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < totalQuestions) {
+                        loadQuestion();
+                    } else {
+                        updateProgressBar(); // isi penuh bar
+                        setTimeout(showResult, 300); // jeda dipersingkat
+                    }
+                } catch (error) {
+                    console.error("Terjadi error saat load soal:", error);
+                    isAnswering = false; // Lepaskan kunci agar bisa jalan lagi
                 }
-            }, 1800);
+            }, 1000);
         }
 
         function showResult() {
