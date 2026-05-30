@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Belajar Matematika Seru!</title>
+    <!-- Menggunakan Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Menggunakan font lucu dari Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cinna-blue: #D9EAF5;
+            --cinna-dark-blue: #8AB4F8;
+            --pocha-green: #D7F0D4;
+            --pocha-dark-green: #81C995;
+            --pastel-pink: #FFD6E8;
+            --text-main: #4A4A4A;
+        }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, var(--cinna-blue), var(--pastel-pink));
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation; /* Mencegah zoom saat double tap cepat di HP */
+        }
+
+        h1, h2, h3, .heading-font {
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 1px;
+        }
+
+        /* Animasi Awan Terapung */
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.8;
+            animation: float 20s infinite linear;
+            z-index: -1;
+        }
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        .cloud::before {
+            width: 50px; height: 50px;
+            top: -20px; left: 15px;
+        }
+        .cloud::after {
+            width: 70px; height: 70px;
+            top: -30px; right: 15px;
+        }
+        
+        @keyframes float {
+            0% { transform: translateX(-100px); }
+            100% { transform: translateX(120vw); }
+        }
+
+        /* Animasi Tombol Menggemaskan */
+        .btn-cute {
+            transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        .btn-cute:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        }
+
+        /* Animasi Jawaban Benar/Salah */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .correct-anim { animation: pop 0.4s ease; background-color: #a7f3d0 !important; color: #065f46 !important; border-color: #059669 !important;}
+        .wrong-anim { animation: shake 0.4s ease; background-color: #fecaca !important; color: #991b1b !important; border-color: #dc2626 !important;}
+
+        .card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Canvas untuk Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .hide { display: none !important; }
+    </style>
+</head>
+<body class="relative flex justify-center items-center p-4">
+
+    <!-- Hiasan Background -->
+    <div class="cloud" style="width: 120px; height: 40px; top: 10%; left: -20px; animation-duration: 25s;"></div>
+    <div class="cloud" style="width: 150px; height: 50px; top: 40%; left: -50px; animation-duration: 35s;"></div>
+    <div class="cloud" style="width: 100px; height: 35px; top: 70%; left: -10px; animation-duration: 20s;"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-3xl p-6 card-shadow relative overflow-hidden text-center z-10 border-4 border-white">
+        
+        <!-- HEADER KECIL (Skor & Kembali) -->
+        <div id="game-header" class="flex justify-between items-center mb-6 hide">
+            <button onclick="showMenu()" class="text-pink-500 font-bold text-lg bg-pink-100 rounded-full w-10 h-10 flex items-center justify-center btn-cute">
+                &larr;
+            </button>
+            <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-bold shadow-sm">
+                ⭐ Skor: <span id="score-display">0</span>/5
+            </div>
+        </div>
+
+        <!-- 1. SCREEN: MENU UTAMA -->
+        <div id="menu-screen" class="space-y-6">
+            <div class="flex justify-center space-x-4 mb-2">
+                <!-- SVG Cinnamoroll-inspired icon -->
+                <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <circle cx="50" cy="50" r="30" fill="white" />
+                    <!-- Telinga panjang -->
+                    <ellipse cx="20" cy="45" rx="15" ry="8" fill="white" transform="rotate(-20 20 45)" />
+                    <ellipse cx="80" cy="45" rx="15" ry="8" fill="white" transform="rotate(20 80 45)" />
+                    <!-- Mata biru -->
+                    <circle cx="40" cy="45" r="3" fill="#60A5FA" />
+                    <circle cx="60" cy="45" r="3" fill="#60A5FA" />
+                    <!-- Pipi pink -->
+                    <ellipse cx="32" cy="50" rx="4" ry="2" fill="#FFB6C1" />
+                    <ellipse cx="68" cy="50" rx="4" ry="2" fill="#FFB6C1" />
+                    <!-- Mulut W -->
+                    <path d="M 45 52 Q 47.5 55 50 52 Q 52.5 55 55 52" stroke="#4A4A4A" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </svg>
+                <!-- SVG Pochacco-inspired icon -->
+                <svg width="80" height="80" viewBox="0 0 100 100" class="drop-shadow-md">
+                    <circle cx="50" cy="50" r="30" fill="white" />
+                    <!-- Telinga hitam flop -->
+                    <path d="M 25 35 Q 10 50 15 65 Q 25 70 28 50 Z" fill="#333" />
+                    <path d="M 75 35 Q 90 50 85 65 Q 75 70 72 50 Z" fill="#333" />
+                    <!-- Mata -->
+                    <circle cx="40" cy="45" r="3" fill="#333" />
+                    <circle cx="60" cy="45" r="3" fill="#333" />
+                    <!-- Hidung oval hitam -->
+                    <ellipse cx="50" cy="52" rx="4" ry="3" fill="#333" />
+                </svg>
+            </div>
+            
+            <div>
+                <h1 class="text-3xl text-pink-500 mb-1">Halo Anak Cantik!</h1>
+                <p class="text-gray-600 font-semibold">Mau main sambil belajar apa hari ini?</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-6">
+                <button onclick="startQuiz('add')" class="btn-cute bg-[#D9EAF5] border-2 border-[#8AB4F8] text-[#3B82F6] rounded-2xl p-4 flex flex-col items-center">
+                    <span class="text-3xl mb-1">➕</span>
+                    <span class="font-bold heading-font">Tambah</span>
+                </button>
+                <button onclick="startQuiz('sub')" class="btn-cute bg-[#FFD6E8] border-2 border-[#F472B6] text-[#DB2777] rounded-2xl p-4 flex flex-col items-center">
+                    <span class="text-3xl mb-1">➖</span>
+                    <span class="font-bold heading-font">Kurang</span>
+                </button>
+                <button onclick="startQuiz('mul')" class="btn-cute bg-[#D7F0D4] border-2 border-[#81C995] text-[#059669] rounded-2xl p-4 flex flex-col items-center">
+                    <span class="text-3xl mb-1">✖️</span>
+                    <span class="font-bold heading-font">Kali</span>
+                </button>
+                <button onclick="startQuiz('div')" class="btn-cute bg-[#FEF08A] border-2 border-[#FBBF24] text-[#D97706] rounded-2xl p-4 flex flex-col items-center">
+                    <span class="text-3xl mb-1">➗</span>
+                    <span class="font-bold heading-font">Bagi</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. SCREEN: QUIZ AREA -->
+        <div id="quiz-screen" class="hide flex flex-col items-center">
+            
+            <!-- Karakter penyemangat acak -->
+            <div id="cheer-character" class="text-4xl mb-4 animate-bounce">🐶☁️</div>
+            
+            <h2 id="question-text" class="text-4xl text-gray-700 mb-8 mt-2">10 + 15 = ?</h2>
+
+            <div id="options-container" class="grid grid-cols-2 gap-4 w-full">
+                <!-- Tombol pilihan ganda akan dibuat via JS -->
+            </div>
+            
+            <!-- Pesan Feedback -->
+            <div id="feedback-msg" class="mt-6 text-xl font-bold h-8 heading-font opacity-0 transition-opacity"></div>
+        </div>
+
+        <!-- 3. SCREEN: RESULT / HASIL -->
+        <div id="result-screen" class="hide flex flex-col items-center space-y-6">
+            <h1 class="text-4xl text-pink-500 mb-2 mt-4">Yeay! Selesai! 🎉</h1>
+            
+            <div class="relative w-32 h-32 flex justify-center items-center bg-blue-50 rounded-full border-4 border-blue-200">
+                <span class="text-5xl" id="result-star">🌟</span>
+            </div>
+
+            <div>
+                <p class="text-lg text-gray-600 font-bold">Skor Kamu:</p>
+                <p class="text-5xl heading-font text-blue-500 my-2" id="final-score">5/5</p>
+                <p class="text-xl text-green-500 font-bold heading-font" id="result-message">Kamu Hebat Banget!</p>
+            </div>
+
+            <button onclick="showMenu()" class="mt-4 btn-cute bg-pink-400 hover:bg-pink-500 text-white w-full py-4 rounded-full text-xl heading-font border-b-4 border-pink-600">
+                Main Lagi Yuk! 🐾
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Canvas for Confetti -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        // --- State Management ---
+        let currentModule = '';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const totalQuestions = 5; // Jumlah soal tiap sesi
+        let currentAnswer = 0;
+        let isAnswering = false;
+
+        // Elemen DOM
+        const menuScreen = document.getElementById('menu-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const gameHeader = document.getElementById('game-header');
+        
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const scoreDisplay = document.getElementById('score-display');
+        const feedbackMsg = document.getElementById('feedback-msg');
+        const cheerCharacter = document.getElementById('cheer-character');
+
+        const emojis = ['🐶☁️', '🐶⚽', '🎀', '🌸', '✨', '🐾'];
+
+        // --- Navigasi Layar ---
+        function showMenu() {
+            menuScreen.classList.remove('hide');
+            quizScreen.classList.add('hide');
+            resultScreen.classList.add('hide');
+            gameHeader.classList.add('hide');
+            clearConfetti();
+        }
+
+        function startQuiz(moduleType) {
+            currentModule = moduleType;
+            currentQuestionIndex = 0;
+            score = 0;
+            updateScoreDisplay();
+            
+            menuScreen.classList.add('hide');
+            resultScreen.classList.add('hide');
+            quizScreen.classList.remove('hide');
+            gameHeader.classList.remove('hide');
+            
+            loadQuestion();
+        }
+
+        // --- Logika Matematika (Level Kelas 3 SD) ---
+        function generateMathProblem() {
+            let num1, num2, answer, operatorSymbol;
+            
+            switch(currentModule) {
+                case 'add': // Penjumlahan: dua angka antara 10 - 50
+                    num1 = Math.floor(Math.random() * 41) + 10;
+                    num2 = Math.floor(Math.random() * 41) + 10;
+                    answer = num1 + num2;
+                    operatorSymbol = '+';
+                    break;
+                case 'sub': // Pengurangan: angka besar dikurangi angka kecil
+                    num1 = Math.floor(Math.random() * 50) + 30; // 30 - 80
+                    num2 = Math.floor(Math.random() * (num1 - 10)) + 5; // Pastikan hasilnya selalu positif dan logis
+                    answer = num1 - num2;
+                    operatorSymbol = '-';
+                    break;
+                case 'mul': // Perkalian: 1 s.d 10
+                    num1 = Math.floor(Math.random() * 9) + 2; // 2 - 10
+                    num2 = Math.floor(Math.random() * 9) + 2; // 2 - 10
+                    answer = num1 * num2;
+                    operatorSymbol = '×';
+                    break;
+                case 'div': // Pembagian: Hasil pas 1-10
+                    answer = Math.floor(Math.random() * 9) + 2; // Jawaban 2-10
+                    num2 = Math.floor(Math.random() * 9) + 2; // Pembagi 2-10
+                    num1 = answer * num2; // Angka yang dibagi
+                    operatorSymbol = '÷';
+                    break;
+            }
+
+            return {
+                text: `${num1} ${operatorSymbol} ${num2} = ?`,
+                correct: answer
+            };
+        }
+
+        function generateOptions(correctAnswer) {
+            let options = new Set();
+            options.add(correctAnswer);
+            
+            while(options.size < 4) {
+                // Buat pengecoh yang dekat dengan jawaban asli
+                let offset = Math.floor(Math.random() * 11) - 5; // -5 to +5
+                if (offset === 0) offset = 2; // hindari duplikat 0 offset
+                
+                let wrongAnswer = correctAnswer + offset;
+                if (wrongAnswer > 0) {
+                    options.add(wrongAnswer);
+                }
+            }
+            
+            // Konversi ke array dan acak
+            return Array.from(options).sort(() => Math.random() - 0.5);
+        }
+
+        // --- Render UI Kuis ---
+        function loadQuestion() {
+            isAnswering = false;
+            feedbackMsg.style.opacity = '0'; // Sembunyikan feedback
+            
+            // Ganti karakter penyemangat secara acak
+            cheerCharacter.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+            const problem = generateMathProblem();
+            currentAnswer = problem.correct;
+            questionText.textContent = problem.text;
+
+            const options = generateOptions(currentAnswer);
+            optionsContainer.innerHTML = ''; // Bersihkan opsi lama
+
+            // Warna tombol berdasarkan modul
+            let btnColorClass, btnBorderClass;
+            if(currentModule === 'add') { btnColorClass = 'bg-blue-100 text-blue-700'; btnBorderClass = 'border-blue-300'; }
+            else if(currentModule === 'sub') { btnColorClass = 'bg-pink-100 text-pink-700'; btnBorderClass = 'border-pink-300'; }
+            else if(currentModule === 'mul') { btnColorClass = 'bg-green-100 text-green-700'; btnBorderClass = 'border-green-300'; }
+            else { btnColorClass = 'bg-yellow-100 text-yellow-700'; btnBorderClass = 'border-yellow-300'; }
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = `btn-cute ${btnColorClass} border-2 ${btnBorderClass} text-2xl heading-font py-4 rounded-2xl w-full flex justify-center items-center`;
+                btn.textContent = opt;
+                btn.onclick = () => handleAnswer(opt, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selected, btnElement) {
+            if (isAnswering) return; // Cegah double klik
+            isAnswering = true;
+
+            const isCorrect = (selected === currentAnswer);
+
+            // Tampilkan feedback
+            feedbackMsg.style.opacity = '1';
+            
+            if (isCorrect) {
+                btnElement.classList.add('correct-anim');
+                feedbackMsg.textContent = "Wah, Pintar! 🌟";
+                feedbackMsg.className = "mt-6 text-xl h-8 heading-font transition-opacity text-green-500";
+                score++;
+                updateScoreDisplay();
+                startConfetti(30); // Sedikit confetti saat benar
+            } else {
+                btnElement.classList.add('wrong-anim');
+                feedbackMsg.textContent = "Ups! Coba lagi ya 💪";
+                feedbackMsg.className = "mt-6 text-xl h-8 heading-font transition-opacity text-red-500";
+                
+                // Tunjukkan yang benar
+                const allButtons = optionsContainer.querySelectorAll('button');
+                allButtons.forEach(b => {
+                    if (parseInt(b.textContent) === currentAnswer) {
+                        b.classList.add('border-green-500', 'border-4');
+                    }
+                });
+            }
+
+            // Lanjut ke soal berikutnya setelah delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < totalQuestions) {
+                    loadQuestion();
+                } else {
+                    showResult();
+                }
+            }, 1500);
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = score;
+        }
+
+        function showResult() {
+            quizScreen.classList.add('hide');
+            gameHeader.classList.add('hide');
+            resultScreen.classList.remove('hide');
+
+            document.getElementById('final-score').textContent = `${score} / ${totalQuestions}`;
+            const msgElement = document.getElementById('result-message');
+            const starElement = document.getElementById('result-star');
+
+            if (score === totalQuestions) {
+                msgElement.textContent = "Sempurna! Kamu Jenius! 👑";
+                msgElement.className = "text-xl text-pink-500 font-bold heading-font";
+                starElement.textContent = "🏆";
+                startConfetti(150); // Banyak confetti
+            } else if (score >= totalQuestions / 2) {
+                msgElement.textContent = "Bagus Sekali! Pertahankan! 💖";
+                msgElement.className = "text-xl text-blue-500 font-bold heading-font";
+                starElement.textContent = "🌟";
+                startConfetti(50);
+            } else {
+                msgElement.textContent = "Terus Semangat Belajar! Semangat! 🐾";
+                msgElement.className = "text-xl text-green-500 font-bold heading-font";
+                starElement.textContent = "💪";
+            }
+        }
+
+        // --- SISTEM CONFETTI (Visual Canvas) ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        let animationId;
+
+        // Resize canvas if window changes
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        function startConfetti(amount) {
+            const colors = ['#8AB4F8', '#FFB6C1', '#81C995', '#FDE047', '#FFFFFF'];
+            for(let i=0; i<amount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speedY: Math.random() * 3 + 2,
+                    speedX: (Math.random() - 0.5) * 2,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+            if (!animationId) {
+                animateConfetti();
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let activeParticles = 0;
+
+            for(let i=0; i<particles.length; i++) {
+                let p = particles[i];
+                p.y += p.speedY;
+                p.x += p.speedX;
+                p.rotation += p.rotationSpeed;
+
+                if (p.y < canvas.height) {
+                    activeParticles++;
+                }
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                // Gambar confetti kotak atau bulat
+                if (i % 2 === 0) {
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            if (activeParticles > 0) {
+                animationId = requestAnimationFrame(animateConfetti);
+            } else {
+                particles = [];
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function clearConfetti() {
+            particles = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+    </script>
+</body>
+</html>
